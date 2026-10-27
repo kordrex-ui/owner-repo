@@ -6,7 +6,7 @@ An n8n workflow that:
 2. **Replies to contact-form leads automatically.** When someone fills in the website contact form, they get a personal AI-written reply from your Gmail.
 3. **Keeps the conversation going.** When that person replies, the email lands in your inbox, the workflow picks it up and answers in the same Gmail thread. Anything it shouldn't answer is passed to you.
 
-Live workflow: https://rogerawilhelma.app.n8n.cloud/workflow/Lv8ReqQkA4Ijsee7 (created as a draft, not published yet)
+Live workflow: https://rogerawilhelma.app.n8n.cloud/workflow/Lv8ReqQkA4Ijsee7 (published and active)
 
 ## How it flows
 
@@ -28,18 +28,19 @@ New Inbox Email (Gmail, 1 min) ─► Prepare Inbox ──┘
 - **Conservative by default.** If the classifier is unsure between auto-reply and human, it chooses human. The reply prompt forbids inventing prices, timelines, guarantees or commitments.
 - **Each email is handled once.** The Gmail trigger only watches `in:inbox is:unread -is:starred -from:me`. Every branch either marks the email read, moves it to Spam, or stars it.
 
-## Setup (about 10 minutes)
+## Setup status
 
-1. **Set the alert address.** Open the **Alert Owner: Needs Reply** node and put the email that should get "needs your reply" alerts in **To**.
-2. **Fill in the business details.** Open **AI Reply Writer** → Options → System Message and edit the `ABOUT KORDREX SYSTEMS` block. Replace `[BOOKING LINK]` and `[WEBSITE URL]` at minimum.
-3. **Check credentials.** Both Gmail nodes use your existing `Gmail account` credential. Both AI models use `n8n free OpenAI API credits` with `gpt-5-mini`. The free credits run out, so switch to your own OpenAI key (or the Gemini credential you have) before going live.
-4. **Connect the website form** (see below).
-5. **Test.** Click *Execute workflow* and submit the form once, or send yourself an email from another address. Check the execution log.
-6. **Publish** the workflow so it runs on its own.
+- [x] Owner alerts go to `kordrex@kordrexsystems.com` (**Alert Owner: Needs Reply** node).
+- [x] Reply prompt uses https://kordrexsystems.com and asks new leads for two or three call times and a phone number. If you get a booking link (Calendly, Cal.com, etc.), add it to the `Next step for new leads` line in **AI Reply Writer** → Options → System Message.
+- [x] Both AI models run on the `Google Gemini(PaLM) Api account` credential (`models/gemini-3-flash-preview`), not the free OpenAI credits that run out.
+- [x] Gmail nodes use the `Gmail account` credential.
+- [x] Workflow published.
+- [ ] **Connect the website contact form** (see below). The site at kordrexsystems.com was deployed to Netlify by drag-and-drop, so its source isn't in a repo; add the form to your site files and re-upload.
+- [ ] **Test** by submitting the form once and emailing yourself from another address, then check the n8n execution log.
 
 ## Connecting your website contact form
 
-Production webhook URL (works once the workflow is published):
+Production webhook URL (works the workflow is published):
 
 ```
 POST https://rogerawilhelma.app.n8n.cloud/webhook/kordrex-contact-form
