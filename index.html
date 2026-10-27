@@ -1,0 +1,1341 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Kordrex</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Expanded:wght@500;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0a0a0a;
+    --bg-card:rgba(20,20,20,0.62);
+    --bg-card-solid:#141414;
+    --line:rgba(255,255,255,0.14);
+    --line-soft:rgba(255,255,255,0.07);
+    --fg:#f2f2f0;
+    --fg-dim:#b0b0ac;
+    --fg-mute:#7a7a76;
+    --node:#e9e9e6;
+    --star:#eceae5;
+    --star-off:#4a4a46;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--fg);
+    font-family:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  img{max-width:100%;}
+  [hidden]{display:none!important;}
+
+  h1,h2,h3{
+    font-family:'Archivo Expanded',ui-sans-serif,system-ui,sans-serif;
+    font-weight:600;
+    letter-spacing:0.01em;
+    text-wrap:balance;
+    margin:0;
+  }
+  a{color:inherit;}
+
+  .gutter{
+    padding-left:max(22px, env(safe-area-inset-left, 0px));
+    padding-right:max(22px, env(safe-area-inset-right, 0px));
+  }
+  .wrap{max-width:1180px;margin:0 auto;width:100%;}
+  .eyebrow{
+    font-family:'IBM Plex Mono',ui-monospace,monospace;
+    font-size:0.72rem;
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+    color:var(--fg-mute);
+  }
+
+  /* ---------- BACKGROUND STAGE ---------- */
+  .bg-stage{position:fixed;inset:0;z-index:0;pointer-events:none;background:var(--bg);}
+  .bg-layer{
+    position:absolute;inset:0;
+    background-position:center;
+    background-size:cover;
+    background-repeat:no-repeat;
+    opacity:0;
+    transform:scale(1.05);
+    transition:opacity 900ms cubic-bezier(.22,.61,.36,1), transform 2200ms cubic-bezier(.22,.61,.36,1);
+  }
+  .bg-layer.on{opacity:1;transform:scale(1);}
+  .bg-scrim{
+    position:absolute;inset:0;
+    background:
+      linear-gradient(180deg, rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.72) 22%, rgba(10,10,10,0.74) 62%, rgba(10,10,10,0.97) 100%),
+      radial-gradient(120% 80% at 50% 40%, rgba(10,10,10,0.15) 0%, rgba(10,10,10,0.82) 100%);
+  }
+  .bg-grain{
+    position:absolute;inset:0;opacity:0.35;mix-blend-mode:overlay;
+    background-image:radial-gradient(rgba(255,255,255,0.055) 1px, transparent 1px);
+    background-size:3px 3px;
+  }
+
+  .shell{position:relative;z-index:1;min-height:100%;}
+
+  /* ---------- NAV ---------- */
+  header.nav{
+    position:sticky;top:env(safe-area-inset-top,0px);z-index:50;
+    background:linear-gradient(180deg, rgba(10,10,10,0.94) 0%, rgba(10,10,10,0.80) 100%);
+    backdrop-filter:blur(14px);
+    -webkit-backdrop-filter:blur(14px);
+    border-bottom:1px solid var(--line-soft);
+  }
+  .nav-inner{
+    display:flex;align-items:center;justify-content:space-between;
+    padding:20px 0;gap:20px;flex-wrap:wrap;
+  }
+  .wordmark{
+    font-family:'Archivo Expanded',sans-serif;
+    font-weight:700;font-size:1.12rem;letter-spacing:0.09em;
+    display:flex;flex-direction:column;gap:6px;
+    text-decoration:none;background:none;border:0;padding:0;color:var(--fg);cursor:pointer;
+  }
+  .wordmark .rule{width:58px;height:2px;background:var(--fg);}
+  nav.links{display:flex;gap:30px;flex-wrap:wrap;}
+  nav.links button{
+    font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.15em;text-transform:uppercase;
+    background:none;border:0;padding:0 0 5px;color:var(--fg-mute);cursor:pointer;
+    border-bottom:2px solid transparent;
+    transition:color .22s ease,border-color .22s ease;
+  }
+  nav.links button:hover{color:var(--fg);}
+  nav.links button[aria-current="page"]{color:var(--fg);border-color:var(--fg);}
+  nav.links button:focus-visible,.wordmark:focus-visible{outline:2px solid var(--fg);outline-offset:4px;}
+  @media (max-width:640px){
+    .nav-inner{padding:16px 0;}
+    nav.links{gap:18px;width:100%;}
+    nav.links button{font-size:0.66rem;letter-spacing:0.11em;}
+  }
+
+  /* ---------- PAGE VIEWS ---------- */
+  .page{display:none;}
+  .page.active{display:block;animation:pageIn 520ms cubic-bezier(.22,.61,.36,1) both;}
+  @keyframes pageIn{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){
+    .page.active{animation:none;}
+    .bg-layer{transition:opacity 200ms linear;transform:none;}
+    .bg-layer.on{transform:none;}
+  }
+
+  .page-head{padding:78px 0 44px;}
+  .page-head h2{font-size:clamp(2.1rem,5.4vw,3.4rem);line-height:1.02;margin-top:14px;}
+  .page-head .sub{color:var(--fg-dim);max-width:52ch;line-height:1.75;margin-top:20px;font-size:1.02rem;font-weight:300;}
+  .page-head .rule{width:72px;height:2px;background:var(--fg);margin-top:26px;}
+  @media (max-width:640px){ .page-head{padding:54px 0 32px;} }
+
+  .block{padding-bottom:92px;}
+  #page-services .block{padding-top:78px;}
+  @media (max-width:640px){ #page-services .block{padding-top:54px;} }
+
+  /* ---------- HOME ---------- */
+  .hero{
+    padding:84px 0 100px;
+    max-width:720px;
+  }
+  @media (max-width:860px){ .hero{padding:52px 0 70px;} }
+  .hero h1{font-size:clamp(3rem,8vw,5.4rem);line-height:0.94;}
+  .hero .rule-full{width:100%;max-width:520px;height:2px;background:var(--fg);margin:26px 0;}
+  .hero .tagline{
+    font-family:'Archivo Expanded',sans-serif;font-weight:600;
+    font-size:clamp(1.5rem,3.6vw,2.2rem);letter-spacing:0.02em;line-height:1.3;margin-bottom:34px;
+  }
+
+  .btn{
+    display:inline-flex;align-items:center;gap:10px;
+    font-family:'IBM Plex Mono',monospace;font-size:0.76rem;letter-spacing:0.15em;text-transform:uppercase;
+    padding:16px 30px;border:1px solid var(--fg);color:var(--fg);text-decoration:none;
+    background:transparent;cursor:pointer;
+    transition:background .22s ease,color .22s ease;
+  }
+  .btn:hover{background:var(--fg);color:#0a0a0a;}
+  .btn.ghost{border-color:var(--line);color:var(--fg-dim);}
+  .btn.ghost:hover{background:rgba(255,255,255,0.1);color:var(--fg);}
+  .btn:focus-visible{outline:2px solid var(--fg);outline-offset:4px;}
+
+  /* ---------- SERVICES ---------- */
+  .services-grid{
+    display:grid;grid-template-columns:repeat(2,1fr);gap:1px;
+    background:var(--line-soft);border:1px solid var(--line-soft);
+  }
+  @media (max-width:640px){ .services-grid{grid-template-columns:1fr;} }
+  .service-card{
+    background:rgba(10,10,10,0.55);
+    backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px);
+    padding:44px 40px;display:flex;flex-direction:column;gap:16px;min-height:250px;
+    transition:background .28s ease;
+  }
+  @media (max-width:640px){ .service-card{padding:34px 26px;min-height:0;} }
+  .service-card:hover{background:rgba(24,24,24,0.78);}
+  .service-num{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;color:var(--fg-mute);letter-spacing:0.12em;}
+  .service-card h3{font-size:1.24rem;}
+  .service-card p{color:var(--fg-dim);font-size:0.95rem;line-height:1.7;margin:0;font-weight:300;max-width:42ch;}
+  .includes-label{margin-top:8px;}
+  .includes{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:11px;}
+  .includes li{
+    position:relative;padding-left:22px;
+    color:var(--fg-dim);font-size:0.9rem;line-height:1.62;font-weight:300;
+  }
+  .includes li::before{
+    content:'';position:absolute;left:0;top:0.52em;
+    width:7px;height:7px;border:1.5px solid var(--fg);border-radius:50%;
+  }
+  .includes li b{color:var(--fg);font-weight:500;}
+  .best-for{
+    margin-top:auto;padding-top:18px;border-top:1px solid var(--line-soft);
+    color:var(--fg-dim);font-size:0.88rem;line-height:1.6;font-weight:300;
+  }
+  .best-for .eyebrow{display:block;margin-bottom:6px;}
+  .service-icon{width:32px;height:32px;}
+  .service-icon circle{fill:none;stroke:var(--fg);stroke-width:1.6;}
+  .service-icon line,.service-icon path,.service-icon rect,.service-icon polyline{stroke:var(--fg);stroke-width:1.6;fill:none;}
+
+  .phase-strip{margin-top:70px;border-top:1px solid var(--line-soft);padding-top:44px;}
+  .phases{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:30px;}
+  @media (max-width:760px){ .phases{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:460px){ .phases{grid-template-columns:1fr;} }
+  .phase{display:flex;flex-direction:column;gap:9px;}
+  .phase .step{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;color:var(--fg-mute);}
+  .phase b{font-family:'Archivo Expanded',sans-serif;font-size:1rem;font-weight:600;}
+  .phase span.d{color:var(--fg-dim);font-size:0.89rem;line-height:1.6;font-weight:300;}
+
+  /* ---------- REVIEWS ---------- */
+  .rating-bar{
+    display:flex;align-items:center;gap:30px;flex-wrap:wrap;
+    border:1px solid var(--line);background:var(--bg-card);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    padding:30px 34px;margin-bottom:34px;
+  }
+  .rating-score{font-family:'Archivo Expanded',sans-serif;font-size:3rem;font-weight:700;line-height:1;}
+  .stars{display:inline-flex;gap:3px;}
+  .stars svg{width:15px;height:15px;}
+  .stars .on{fill:var(--star);}
+  .stars .off{fill:var(--star-off);}
+  .rating-meta{display:flex;flex-direction:column;gap:7px;}
+  .rating-split{display:flex;gap:26px;margin-left:auto;flex-wrap:wrap;}
+  .rating-split div{display:flex;flex-direction:column;gap:3px;}
+  .rating-split b{font-family:'Archivo Expanded',sans-serif;font-size:1.3rem;}
+
+  .reviews-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;}
+  @media (max-width:880px){ .reviews-grid{grid-template-columns:repeat(2,1fr);} }
+  @media (max-width:600px){ .reviews-grid{grid-template-columns:1fr;} }
+  .review-card{
+    border:1px solid var(--line);
+    background:var(--bg-card);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    padding:30px 28px;display:flex;flex-direction:column;gap:17px;
+    transition:border-color .25s ease,transform .25s ease;
+  }
+  .review-card:hover{border-color:rgba(255,255,255,0.3);transform:translateY(-3px);}
+  .review-card p.quote{color:var(--fg-dim);font-size:0.97rem;line-height:1.72;margin:0;flex:1;font-weight:300;}
+  .review-foot{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line-soft);padding-top:16px;}
+  .review-who{display:flex;flex-direction:column;gap:3px;}
+  .review-name{font-weight:500;font-size:0.92rem;}
+  .review-role{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.09em;text-transform:uppercase;color:var(--fg-mute);}
+
+  /* ---------- ABOUT ---------- */
+  #page-about .page-head{text-align:center;}
+  #page-about .page-head .rule{margin-left:auto;margin-right:auto;}
+  .about-center{
+    display:flex;flex-direction:column;align-items:center;gap:36px;
+  }
+  .about-grid{max-width:62ch;text-align:center;}
+  .about-grid p{color:var(--fg-dim);line-height:1.8;font-size:1rem;font-weight:300;}
+  .about-grid p + p{margin-top:20px;}
+  /* ---------- CONTACT ---------- */
+  .contact-grid{max-width:560px;}
+  .contact-list{display:flex;flex-direction:column;gap:1px;background:var(--line-soft);border:1px solid var(--line-soft);}
+  .contact-row{background:rgba(10,10,10,0.55);padding:24px 26px;display:flex;justify-content:space-between;gap:16px;align-items:center;flex-wrap:wrap;}
+  .contact-row .k{font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg-mute);}
+  .contact-row .v{font-size:0.98rem;}
+  .contact-row a{text-decoration:none;border-bottom:1px solid var(--line);padding-bottom:2px;}
+  .contact-row a:hover{border-color:var(--fg);}
+  .contact-row .stack{display:flex;flex-direction:column;gap:10px;font-variant-numeric:tabular-nums;}
+
+  /* ---------- LEAD FORM ---------- */
+  .contact-layout{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:40px;align-items:start;}
+  @media (max-width:880px){ .contact-layout{grid-template-columns:1fr;} }
+  .contact-layout .contact-grid{max-width:none;}
+  .lead-form{
+    border:1px solid var(--line);background:var(--bg-card);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    padding:34px;display:grid;grid-template-columns:1fr 1fr;gap:20px 18px;
+  }
+  @media (max-width:640px){ .lead-form{padding:26px 20px;grid-template-columns:1fr;} }
+  .lead-form .full{grid-column:1/-1;}
+  .field{display:flex;flex-direction:column;gap:8px;min-width:0;}
+  .field label{font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--fg-mute);}
+  .field label .req{color:var(--fg-dim);}
+  .field input,.field select,.field textarea{
+    width:100%;font:inherit;font-size:16px;color:var(--fg);
+    background:rgba(10,10,10,0.6);border:1px solid var(--line);border-radius:0;
+    padding:13px 14px;transition:border-color .2s ease;
+    -webkit-appearance:none;appearance:none;
+  }
+  .field select{
+    background-image:linear-gradient(45deg,transparent 50%,var(--fg-dim) 50%),linear-gradient(135deg,var(--fg-dim) 50%,transparent 50%);
+    background-position:calc(100% - 18px) 55%,calc(100% - 13px) 55%;background-size:5px 5px;background-repeat:no-repeat;padding-right:36px;
+  }
+  .field select option{background:#141414;color:var(--fg);}
+  .field textarea{min-height:120px;resize:vertical;line-height:1.6;}
+  .field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--fg);}
+  .field input[aria-invalid="true"],.field select[aria-invalid="true"],.field textarea[aria-invalid="true"]{border-color:#e07a6a;}
+  .consent{display:flex;gap:12px;align-items:flex-start;color:var(--fg-dim);font-size:0.84rem;line-height:1.6;font-weight:300;cursor:pointer;}
+  .consent input{
+    flex:none;width:18px;height:18px;margin:2px 0 0;-webkit-appearance:none;appearance:none;
+    border:1.5px solid var(--fg-dim);background:transparent;cursor:pointer;display:grid;place-content:center;
+  }
+  .consent input:checked{background:var(--fg);border-color:var(--fg);}
+  .consent input:checked::after{content:'';width:8px;height:4px;border:2px solid #0a0a0a;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px);}
+  .consent input:focus-visible{outline:2px solid var(--fg);outline-offset:3px;}
+  .hp{position:absolute!important;left:-9999px!important;width:1px;height:1px;overflow:hidden;}
+  .form-foot{display:flex;align-items:center;gap:18px;flex-wrap:wrap;}
+  .form-foot .btn[disabled]{opacity:0.55;cursor:progress;}
+  .form-status{font-size:0.9rem;line-height:1.55;color:var(--fg-dim);min-height:1.4em;}
+  .form-status.err{color:#e9a092;}
+  .form-success{
+    border:1px solid var(--line);background:var(--bg-card);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    padding:44px 34px;display:flex;flex-direction:column;gap:14px;
+  }
+  .form-success h3{font-size:1.4rem;}
+  .form-success p{color:var(--fg-dim);line-height:1.7;margin:0;font-weight:300;}
+
+  /* ---------- SERVICES: HORIZONTAL SCROLL ---------- */
+  .hscroll{position:relative;margin-left:calc(-1 * max(22px, env(safe-area-inset-left, 0px)));margin-right:calc(-1 * max(22px, env(safe-area-inset-right, 0px)));}
+  .hs-head.wrap{max-width:1224px;padding-left:22px;padding-right:22px;}
+  .hs-sticky{
+    position:sticky;top:var(--hdr,70px);
+    height:calc(100vh - var(--hdr,70px));height:calc(100dvh - var(--hdr,70px));
+    overflow:hidden;display:flex;flex-direction:column;
+  }
+  .hs-head{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:clamp(18px,3.4vh,34px) 0 clamp(16px,2.6vh,26px);flex:none;}
+  .hs-title{display:flex;flex-direction:column;gap:10px;}
+  .hs-count{font-family:'Archivo Expanded',sans-serif;font-size:1.5rem;color:var(--fg-mute);font-variant-numeric:tabular-nums;}
+  .hs-count b{color:var(--fg);font-weight:600;}
+  .hs-ctrl{display:flex;align-items:center;gap:12px;}
+  .hs-bar{width:clamp(80px,18vw,220px);height:2px;background:var(--line);margin-right:10px;overflow:hidden;}
+  .hs-bar span{display:block;height:100%;width:100%;background:var(--fg);transform-origin:left;transform:scaleX(0);}
+  .hs-arrow{
+    width:46px;height:46px;border-radius:50%;border:1px solid var(--line);background:rgba(10,10,10,0.5);
+    color:var(--fg);display:grid;place-content:center;cursor:pointer;
+    transition:background .2s ease,color .2s ease,border-color .2s ease,opacity .2s ease;
+  }
+  .hs-arrow:hover{background:var(--fg);color:#0a0a0a;border-color:var(--fg);}
+  .hs-arrow:focus-visible{outline:2px solid var(--fg);outline-offset:3px;}
+  .hs-arrow[disabled]{opacity:.3;cursor:default;background:transparent;color:var(--fg);border-color:var(--line);}
+  .hs-arrow svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;}
+  .hs-viewport{flex:1;min-height:0;display:flex;align-items:center;padding-bottom:clamp(18px,4vh,40px);}
+  .hs-track{
+    display:flex;gap:24px;align-items:stretch;will-change:transform;
+    padding:0 max(22px, calc((100vw - 1180px) / 2));
+  }
+  .hs-panel{
+    flex:0 0 auto;width:min(520px, 78vw);
+    border:1px solid var(--line);background:rgba(12,12,12,0.72);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    padding:clamp(28px,4vh,40px) 36px;display:flex;flex-direction:column;gap:14px;
+    transform-origin:center;
+    transition:border-color .3s ease;
+  }
+  .hs-panel.service-card{min-height:0;}
+  .hs-panel:hover{border-color:rgba(255,255,255,0.32);}
+  .hs-panel h3{font-size:1.3rem;}
+  .hs-panel p{color:var(--fg-dim);font-size:0.95rem;line-height:1.7;margin:0;font-weight:300;max-width:none;}
+  .hs-intro{border-color:transparent;background:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;justify-content:center;width:min(560px, 82vw);padding-left:0;}
+  .hs-intro:hover{border-color:transparent;}
+  .hs-intro h2{font-size:clamp(2rem,4.4vw,3.2rem);line-height:1.04;}
+  .hs-intro p{font-size:1.04rem;max-width:40ch;}
+  .hs-hint{display:inline-flex;align-items:center;gap:10px;margin-top:14px;font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.16em;text-transform:uppercase;color:var(--fg-mute);}
+  .hs-hint svg{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.6;animation:nudge 1.8s ease-in-out infinite;}
+  .hs-hint-touch{display:none;}
+  @keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(6px)}}
+  .hs-steps{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;}
+  .hs-steps li{display:flex;gap:18px;padding:18px 0;border-top:1px solid var(--line-soft);}
+  .hs-steps li:first-child{border-top:0;padding-top:6px;}
+  .hs-steps .step{font-family:'IBM Plex Mono',monospace;font-size:0.72rem;letter-spacing:0.12em;color:var(--fg-mute);padding-top:4px;}
+  .hs-steps div{display:flex;flex-direction:column;gap:5px;}
+  .hs-steps b{font-family:'Archivo Expanded',sans-serif;font-size:1rem;font-weight:600;}
+  .hs-steps div span{color:var(--fg-dim);font-size:0.9rem;line-height:1.6;font-weight:300;}
+  .hs-cta{justify-content:center;background:rgba(242,242,240,0.06);}
+  .hs-cta h3{font-size:clamp(1.5rem,2.6vw,2rem);line-height:1.15;}
+  .hs-cta-btns{display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;}
+
+  @media (min-width:760px){
+    .hs-panel.service-card{width:min(640px, 54vw);}
+    .hs-process{width:min(560px, 50vw);}
+  }
+  @media (min-width:760px) and (max-height:940px){
+    .hs-panel{padding:26px 32px;gap:10px;}
+    .hs-panel h3{font-size:1.18rem;}
+    .hs-panel p{font-size:0.9rem;line-height:1.6;}
+    .hs-panel .service-icon{width:26px;height:26px;}
+    .hs-panel .includes{gap:7px;}
+    .hs-panel .includes li{font-size:0.86rem;line-height:1.5;}
+    .hs-panel .includes-label{margin-top:2px;}
+    .hs-panel .best-for{padding-top:12px;font-size:0.85rem;}
+    .hs-steps li{padding:12px 0;}
+    .hs-intro h2{font-size:clamp(1.9rem,3.8vw,2.8rem);}
+  }
+  /* swipe mode: small screens, short screens, reduced motion */
+  .hscroll.swipe .hs-sticky{position:relative;top:0;height:auto;overflow:visible;}
+  .hscroll.swipe .hs-viewport{
+    overflow-x:auto;overscroll-behavior-x:contain;scroll-snap-type:x mandatory;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch;padding-bottom:70px;
+  }
+  .hscroll.swipe .hs-viewport::-webkit-scrollbar{display:none;}
+  .hscroll.swipe .hs-track{transform:none!important;}
+  .hscroll.swipe .hs-panel{scroll-snap-align:start;scroll-margin-left:22px;transform:none!important;opacity:1!important;}
+  .hscroll.swipe .hs-hint-desk{display:none;}
+  .hscroll.swipe .hs-hint-touch{display:inline;}
+  @media (max-width:640px){
+    .hs-head{padding:44px 0 22px;}
+    .hs-panel{padding:30px 24px;width:84vw;}
+    .hs-intro{width:84vw;padding-left:0;}
+    .hs-arrow{width:42px;height:42px;}
+    .hs-bar{display:none;}
+  }
+  @media (prefers-reduced-motion:reduce){ .hs-hint svg{animation:none;} }
+
+  /* ---------- FOOTER ---------- */
+  footer{
+    border-top:1px solid var(--line-soft);
+    padding:34px 0 46px;
+    display:flex;justify-content:space-between;align-items:center;gap:16px;flex-wrap:wrap;
+    color:var(--fg-mute);font-family:'IBM Plex Mono',monospace;font-size:0.7rem;letter-spacing:0.09em;
+  }
+  footer button{background:none;border:0;color:var(--fg-mute);font:inherit;cursor:pointer;padding:0;}
+  footer button:hover{color:var(--fg-dim);}
+  .foot-links{display:flex;gap:18px;flex-wrap:wrap;}
+
+  /* ---------- CHAT BUBBLE ---------- */
+  .chat-bubble{
+    display:flex;
+    position:fixed;
+    left:max(24px, env(safe-area-inset-left, 0px));
+    bottom:max(24px, env(safe-area-inset-bottom, 0px));
+    width:58px;height:58px;border-radius:50%;border:0;padding:0;
+    background:var(--fg);
+    align-items:center;justify-content:center;
+    box-shadow:0 8px 24px rgba(0,0,0,0.45);
+    z-index:60;
+    cursor:pointer;
+    transition:transform .2s ease;
+  }
+  .chat-bubble:hover{transform:scale(1.06);}
+  .chat-bubble:focus-visible{outline:2px solid var(--fg);outline-offset:4px;}
+  .chat-bubble .x{display:none;}
+  .chat-bubble[aria-expanded="true"] .x{display:block;}
+  .chat-bubble[aria-expanded="true"] .speech{display:none;}
+  .chat-bubble .dot{
+    position:absolute;top:2px;right:2px;width:12px;height:12px;border-radius:50%;
+    background:#6fd08c;border:2px solid var(--bg);
+  }
+  .chat-bubble[aria-expanded="true"] .dot{display:none;}
+
+  /* ---------- CHAT PANEL ---------- */
+  .chat-panel{
+    position:fixed;z-index:59;
+    left:max(24px, env(safe-area-inset-left, 0px));
+    bottom:calc(max(24px, env(safe-area-inset-bottom, 0px)) + 72px);
+    width:380px;max-width:calc(100vw - 48px);
+    height:560px;max-height:calc(100dvh - 140px);
+    display:flex;flex-direction:column;
+    background:rgba(14,14,14,0.96);
+    backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+    border:1px solid var(--line);
+    box-shadow:0 24px 60px rgba(0,0,0,0.6);
+    transform-origin:bottom left;
+    animation:chatIn 260ms cubic-bezier(.22,.61,.36,1) both;
+  }
+  @keyframes chatIn{from{opacity:0;transform:translateY(10px) scale(.98);}to{opacity:1;transform:none;}}
+  @media (prefers-reduced-motion:reduce){ .chat-panel{animation:none;} }
+  @media (max-width:520px){
+    .chat-panel{left:12px;right:12px;width:auto;max-width:none;bottom:calc(max(18px, env(safe-area-inset-bottom, 0px)) + 66px);height:calc(100dvh - 120px);}
+  }
+  .chat-head{display:flex;align-items:center;gap:12px;padding:16px 18px;border-bottom:1px solid var(--line-soft);}
+  .chat-head .av{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);display:grid;place-content:center;font-family:'Archivo Expanded',sans-serif;font-weight:700;font-size:0.8rem;}
+  .chat-head .t{display:flex;flex-direction:column;gap:3px;flex:1;min-width:0;}
+  .chat-head b{font-family:'Archivo Expanded',sans-serif;font-size:0.88rem;font-weight:600;letter-spacing:0.03em;}
+  .chat-head .s{font-family:'IBM Plex Mono',monospace;font-size:0.64rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--fg-mute);display:flex;align-items:center;gap:6px;}
+  .chat-head .s::before{content:'';width:6px;height:6px;border-radius:50%;background:#6fd08c;}
+  .chat-head button{background:none;border:0;color:var(--fg-mute);cursor:pointer;padding:6px;font-family:'IBM Plex Mono',monospace;font-size:0.64rem;letter-spacing:0.12em;text-transform:uppercase;}
+  .chat-head button:hover{color:var(--fg);}
+  .chat-log{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:12px;overscroll-behavior:contain;}
+  .msg{max-width:86%;padding:11px 14px;font-size:0.92rem;line-height:1.58;white-space:pre-wrap;overflow-wrap:anywhere;}
+  .msg.bot{align-self:flex-start;background:rgba(255,255,255,0.06);border:1px solid var(--line-soft);color:var(--fg);font-weight:300;}
+  .msg.user{align-self:flex-end;background:var(--fg);color:#0a0a0a;}
+  .msg a{color:inherit;}
+  .typing{align-self:flex-start;display:flex;gap:5px;padding:14px;background:rgba(255,255,255,0.06);border:1px solid var(--line-soft);}
+  .typing i{width:6px;height:6px;border-radius:50%;background:var(--fg-dim);animation:blink 1.2s infinite both;}
+  .typing i:nth-child(2){animation-delay:.2s}.typing i:nth-child(3){animation-delay:.4s}
+  @keyframes blink{0%,80%,100%{opacity:.25}40%{opacity:1}}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;padding:0 18px 12px;}
+  .chips button{
+    font-family:'IBM Plex Mono',monospace;font-size:0.68rem;letter-spacing:0.08em;text-transform:uppercase;
+    background:transparent;color:var(--fg-dim);border:1px solid var(--line);padding:8px 11px;cursor:pointer;
+    transition:background .2s ease,color .2s ease,border-color .2s ease;
+  }
+  .chips button:hover{background:var(--fg);color:#0a0a0a;border-color:var(--fg);}
+  .chat-input{display:flex;gap:8px;padding:12px;border-top:1px solid var(--line-soft);}
+  .chat-input input{
+    flex:1;min-width:0;font:inherit;font-size:16px;color:var(--fg);
+    background:rgba(10,10,10,0.6);border:1px solid var(--line);border-radius:0;padding:11px 12px;
+  }
+  .chat-input input:focus{outline:none;border-color:var(--fg);}
+  .chat-input button{
+    flex:none;width:46px;border:1px solid var(--fg);background:var(--fg);color:#0a0a0a;cursor:pointer;display:grid;place-content:center;
+  }
+  .chat-input button[disabled]{opacity:.45;cursor:default;}
+  .chat-input button svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;}
+  .chat-bubble svg{width:26px;height:26px;fill:none;stroke:var(--bg);stroke-width:1.8;stroke-linejoin:round;stroke-linecap:round;}
+  @media (max-width:640px){
+    .chat-bubble{width:52px;height:52px;left:max(18px, env(safe-area-inset-left, 0px));bottom:max(18px, env(safe-area-inset-bottom, 0px));}
+  }
+</style>
+
+<div class="bg-stage" aria-hidden="true">
+  <div class="bg-layer" id="bgA"></div>
+  <div class="bg-layer" id="bgB"></div>
+  <div class="bg-scrim"></div>
+  <div class="bg-grain"></div>
+</div>
+
+<div class="shell">
+
+  <header class="nav gutter">
+    <div class="nav-inner wrap">
+      <button class="wordmark" data-page="home" type="button">
+        KORDREX
+        <span class="rule"></span>
+      </button>
+      <nav class="links">
+        <button type="button" data-page="home" aria-current="page">Home</button>
+        <button type="button" data-page="services">Services</button>
+        <button type="button" data-page="reviews" hidden>Reviews</button>
+        <button type="button" data-page="about">About</button>
+        <button type="button" data-page="contact">Contact</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="gutter">
+
+    <!-- ============ HOME ============ -->
+    <div class="page active" id="page-home">
+      <div class="hero wrap">
+        <h1>KORDREX</h1>
+        <div class="rule-full"></div>
+        <div class="tagline">Modern, Innovative,<br>Automated, Technology.</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap;">
+          <button class="btn" type="button" data-page="services">Our Services</button>
+          <button class="btn ghost" type="button" data-page="contact">Get in Touch</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ SERVICES ============ -->
+    <div class="page" id="page-services">
+      <section class="hscroll" id="svcScroll" aria-label="Services">
+        <div class="hs-sticky">
+          <div class="hs-head wrap">
+            <div class="hs-title">
+              <span class="eyebrow">What we do</span>
+              <span class="hs-count" aria-hidden="true"><b id="hsNow">01</b> / <span id="hsTotal">05</span></span>
+            </div>
+            <div class="hs-ctrl">
+              <div class="hs-bar" aria-hidden="true"><span id="hsBar"></span></div>
+              <button type="button" class="hs-arrow" id="hsPrev" aria-label="Previous"><svg viewBox="0 0 24 24"><polyline points="15 5 8 12 15 19"/></svg></button>
+              <button type="button" class="hs-arrow" id="hsNext" aria-label="Next"><svg viewBox="0 0 24 24"><polyline points="9 5 16 12 9 19"/></svg></button>
+            </div>
+          </div>
+          <div class="hs-viewport" id="hsViewport">
+            <div class="hs-track" id="hsTrack">
+              <article class="hs-panel hs-intro">
+                <span class="eyebrow">Services</span>
+                <h2>Two ways we take work off your plate.</h2>
+                <p>AI that answers your leads the moment they land, and agents that handle the repetitive work your team does every day.</p>
+                <span class="hs-hint"><span class="hs-hint-desk">Scroll to explore</span><span class="hs-hint-touch">Swipe to explore</span> <svg viewBox="0 0 24 24" aria-hidden="true"><line x1="4" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg></span>
+              </article>
+          <article class="hs-panel service-card">
+            <svg class="service-icon" viewBox="0 0 34 34" aria-hidden="true"><path d="M29 17 A12 12 0 1 1 24.5 7.6"/><polyline points="24,3 25,8.5 19.5,9"/><circle cx="17" cy="17" r="4"/></svg>
+            <span class="service-num">01</span>
+            <h3>AI Automations</h3>
+            <p>Chatbots, speed-to-lead automations, and missed-call-to-text-back — so an inquiry gets answered the moment it lands instead of whenever someone gets to it.</p>
+            <span class="eyebrow includes-label">What's included</span>
+            <ul class="includes">
+              <li><b>Website chatbots</b> that answer common questions, capture contact details, and book appointments around the clock.</li>
+              <li><b>Speed to lead</b> — new inquiries get an instant text or email reply while their interest is highest.</li>
+              <li><b>Missed call text back</b> — when you can't pick up, the caller gets a text right away instead of calling a competitor.</li>
+              <li><b>Automatic follow-ups</b> that keep checking in with leads who haven't replied yet.</li>
+              <li><b>Connected to your tools</b> — your CRM, calendar, email, and phone line.</li>
+            </ul>
+            <div class="best-for"><span class="eyebrow">Best for</span>Businesses losing leads because nobody could reply fast enough.</div>
+          </article>
+
+          <article class="hs-panel service-card">
+            <svg class="service-icon" viewBox="0 0 34 34" aria-hidden="true"><circle cx="17" cy="17" r="5"/><circle cx="17" cy="4.5" r="2.5"/><circle cx="28" cy="24" r="2.5"/><circle cx="6" cy="24" r="2.5"/><line x1="17" y1="7" x2="17" y2="12"/><line x1="21.3" y1="19.5" x2="25.8" y2="22.5"/><line x1="12.7" y1="19.5" x2="8.2" y2="22.5"/></svg>
+            <span class="service-num">02</span>
+            <h3>AI Agents</h3>
+            <p>Creating personalized agents to help with tasks such as emails, sales, or marketing — trained on your process so the output sounds like your business, not a template.</p>
+            <span class="eyebrow includes-label">What's included</span>
+            <ul class="includes">
+              <li><b>Email agents</b> that sort your inbox, draft replies in your voice, and flag what needs you.</li>
+              <li><b>Sales agents</b> that qualify new leads, send follow-ups, and keep your pipeline up to date.</li>
+              <li><b>Marketing agents</b> that draft social posts, email campaigns, and content on a schedule.</li>
+              <li><b>Trained on your business</b> — your services, pricing, common questions, and tone of voice.</li>
+              <li><b>You stay in control</b> — review and approve what goes out before it's sent.</li>
+            </ul>
+            <div class="best-for"><span class="eyebrow">Best for</span>Teams buried in repetitive tasks that follow the same pattern every time.</div>
+          </article>
+
+              <article class="hs-panel hs-process">
+                <span class="service-num">03</span>
+                <h3>How an engagement runs</h3>
+                <ol class="hs-steps">
+                  <li><span class="step">01</span><div><b>Discovery</b><span>We learn how leads reach you today and where they go cold.</span></div></li>
+                  <li><span class="step">02</span><div><b>Plan</b><span>A written scope with what gets built and what it costs, before work starts.</span></div></li>
+                  <li><span class="step">03</span><div><b>Build</b><span>Automations and agents set up and tested against real inquiries.</span></div></li>
+                  <li><span class="step">04</span><div><b>Handover</b><span>Training, documentation, and a support line that stays open afterward.</span></div></li>
+                </ol>
+              </article>
+
+              <article class="hs-panel hs-cta">
+                <span class="eyebrow">Next step</span>
+                <h3>Ready to stop losing leads?</h3>
+                <p>Tell us how inquiries reach you today. We'll show you where they're slipping and what we'd build to catch them.</p>
+                <div class="hs-cta-btns">
+                  <button class="btn" type="button" data-page="contact">Get in Touch</button>
+                  <button class="btn ghost" type="button" id="hsChat">Ask the Assistant</button>
+                </div>
+              </article>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ REVIEWS ============ -->
+    <div class="page" id="page-reviews" hidden>
+      <div class="wrap page-head">
+        <div class="eyebrow">Client feedback</div>
+        <h2>Reviews</h2>
+        <p class="sub">What partners say after the project ships and the system has to hold up on its own.</p>
+        <div class="rule"></div>
+      </div>
+
+      <div class="wrap block">
+        <div class="rating-bar">
+          <span class="rating-score">4.9</span>
+          <div class="rating-meta">
+            <span class="stars" role="img" aria-label="4.9 out of 5 stars">
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+            </span>
+            <span class="eyebrow">Based on 128 client reviews</span>
+          </div>
+          <div class="rating-split">
+            <div><b>96%</b><span class="eyebrow">Would refer</span></div>
+            <div><b>9 yrs</b><span class="eyebrow">Avg. tenure</span></div>
+            <div><b>60+</b><span class="eyebrow">Projects</span></div>
+          </div>
+        </div>
+
+        <div class="reviews-grid">
+          <div class="review-card">
+            <span class="stars" role="img" aria-label="5 out of 5 stars">
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+            </span>
+            <p class="quote">"Kordrex rebuilt our internal tooling in under eight weeks. The handover documentation alone saved our team months of onboarding."</p>
+            <div class="review-foot"><div class="review-who"><span class="review-name">Priya Anand</span><span class="review-role">COO, Fieldstone Logistics</span></div></div>
+          </div>
+
+          <div class="review-card">
+            <span class="stars" role="img" aria-label="5 out of 5 stars">
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+            </span>
+            <p class="quote">"They found integration issues between our CRM and billing system that had been costing us reconciliation hours every single week."</p>
+            <div class="review-foot"><div class="review-who"><span class="review-name">Marcus Webb</span><span class="review-role">Founder, Northline Studio</span></div></div>
+          </div>
+
+          <div class="review-card">
+            <span class="stars" role="img" aria-label="4 out of 5 stars">
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="off" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+            </span>
+            <p class="quote">"Communication was direct the whole way through — no jargon, no surprise scope creep, just steady weekly progress we could see."</p>
+            <div class="review-foot"><div class="review-who"><span class="review-name">Dana Okafor</span><span class="review-role">Ops Director, Halcyon Retail</span></div></div>
+          </div>
+
+          <div class="review-card">
+            <span class="stars" role="img" aria-label="5 out of 5 stars">
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+            </span>
+            <p class="quote">"We came in with a vague brief and left with an architecture plan we could actually budget against. That alone was worth the engagement."</p>
+            <div class="review-foot"><div class="review-who"><span class="review-name">Tomás Reyes</span><span class="review-role">CTO, Vellum Health</span></div></div>
+          </div>
+
+          <div class="review-card">
+            <span class="stars" role="img" aria-label="5 out of 5 stars">
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+            </span>
+            <p class="quote">"Three years on, the platform they built still runs untouched. The support line still gets answered by someone who knows the codebase."</p>
+            <div class="review-foot"><div class="review-who"><span class="review-name">Helen Brandt</span><span class="review-role">Director, Ashgrove Manufacturing</span></div></div>
+          </div>
+
+          <div class="review-card">
+            <span class="stars" role="img" aria-label="5 out of 5 stars">
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+              <svg class="on" viewBox="0 0 24 24"><path d="M12 1l3.2 6.9 7.5.9-5.5 5.2 1.4 7.5-6.6-3.7-6.6 3.7 1.4-7.5-5.5-5.2 7.5-.9z"/></svg>
+            </span>
+            <p class="quote">"The discovery phase changed what we asked for. They talked us out of half the scope and the half we kept actually solved the problem."</p>
+            <div class="review-foot"><div class="review-who"><span class="review-name">Jordan Ellis</span><span class="review-role">VP Operations, Cadence Freight</span></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ ABOUT ============ -->
+    <div class="page" id="page-about">
+      <div class="wrap page-head">
+        <div class="eyebrow">About Kordrex</div>
+        <h2>Emboldened by the Flame of Ambition.</h2>
+        <div class="rule"></div>
+      </div>
+
+      <div class="wrap block">
+        <div class="about-center">
+          <div class="about-grid">
+            <p>Our business provides the means to connect you with potential clients, can save you time by running the business and helping you with mindless tasks and we provide custom made services specially tailored for your needs.</p>
+            <p>Most of what we're called in for isn't a missing tool. It's four tools that don't talk to each other, and a team absorbing the difference by hand. We find that seam, design the connection, and build the thing that closes it for good.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============ CONTACT ============ -->
+    <div class="page" id="page-contact">
+      <div class="wrap page-head">
+        <div class="eyebrow">Get in touch</div>
+        <h2>Have a project in mind?</h2>
+        <div class="rule"></div>
+        <div style="margin-top:30px;display:flex;gap:16px;flex-wrap:wrap;">
+          <a class="btn" href="mailto:kordrex@kordrexsystems.com">Start a Conversation</a>
+          <button class="btn ghost" type="button" data-page="services">See Services</button>
+        </div>
+      </div>
+
+      <div class="wrap block">
+        <div class="contact-layout">
+        <div id="leadWrap">
+          <form class="lead-form" id="leadForm" novalidate>
+            <div class="field">
+              <label for="lf-name">Full name <span class="req">*</span></label>
+              <input id="lf-name" name="name" type="text" autocomplete="name" required>
+            </div>
+            <div class="field">
+              <label for="lf-business">Business name</label>
+              <input id="lf-business" name="business" type="text" autocomplete="organization">
+            </div>
+            <div class="field">
+              <label for="lf-email">Email <span class="req">*</span></label>
+              <input id="lf-email" name="email" type="email" autocomplete="email" required>
+            </div>
+            <div class="field">
+              <label for="lf-phone">Phone <span class="req">*</span></label>
+              <input id="lf-phone" name="phone" type="tel" autocomplete="tel" inputmode="tel" required>
+            </div>
+            <div class="field full">
+              <label for="lf-service">What are you interested in?</label>
+              <select id="lf-service" name="service">
+                <option value="">Select a service</option>
+                <option>AI Automations</option>
+                <option>AI Agents</option>
+                <option>Not sure yet</option>
+              </select>
+            </div>
+            <div class="field full">
+              <label for="lf-message">Tell us about your project</label>
+              <textarea id="lf-message" name="message" placeholder="What you do, what's slowing you down, and what you'd like to fix."></textarea>
+            </div>
+            <div class="hp" aria-hidden="true">
+              <label for="lf-website">Leave this empty</label>
+              <input id="lf-website" name="website" type="text" tabindex="-1" autocomplete="off">
+            </div>
+            <label class="consent full">
+              <input type="checkbox" name="sms_consent" id="lf-consent">
+              <span>I agree to receive texts and emails from Kordrex about my inquiry. Message and data rates may apply. Reply STOP to opt out.</span>
+            </label>
+            <div class="form-foot full">
+              <button class="btn" type="submit" id="lf-submit">Send Inquiry</button>
+              <span class="form-status" id="lf-status" role="status" aria-live="polite"></span>
+            </div>
+          </form>
+          <div class="form-success" id="leadSuccess" hidden tabindex="-1">
+            <span class="eyebrow">Received</span>
+            <h3>Thanks — we're on it.</h3>
+            <p>Your inquiry just landed with us. Keep an eye on your phone and inbox; you'll hear from Kordrex shortly.</p>
+          </div>
+        </div>
+        <div class="contact-grid">
+          <div>
+            <div class="contact-list">
+              <div class="contact-row">
+                <span class="k">Email</span>
+                <span class="v"><a href="mailto:kordrex@kordrexsystems.com">kordrex@kordrexsystems.com</a></span>
+              </div>
+              <div class="contact-row">
+                <span class="k">Phone</span>
+                <span class="v stack">
+                  <a href="tel:+14409036534">(440) 903-6534</a>
+                  <a href="tel:+17576293220">(757) 629-3220</a>
+                </span>
+              </div>
+              <div class="contact-row">
+                <span class="k">Response time</span>
+                <span class="v">Within one business day</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div class="gutter">
+    <footer class="wrap">
+      <span>© 2026 KORDREX. All rights reserved.</span>
+      <span class="foot-links">
+        <button type="button" data-page="home">Home</button>
+        <button type="button" data-page="services">Services</button>
+        <button type="button" data-page="reviews" hidden>Reviews</button>
+        <button type="button" data-page="about">About</button>
+        <button type="button" data-page="contact">Contact</button>
+      </span>
+    </footer>
+  </div>
+
+</div>
+
+<button class="chat-bubble" id="chatBubble" type="button" aria-label="Chat with Kordrex" aria-expanded="false" aria-controls="chatPanel">
+  <svg class="speech" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H9l-4 4v-4H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1z"/><line x1="7" y1="9" x2="17" y2="9"/><line x1="7" y1="12.5" x2="14" y2="12.5"/></svg>
+  <svg class="x" viewBox="0 0 24 24" aria-hidden="true"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+  <span class="dot" aria-hidden="true"></span>
+</button>
+
+<section class="chat-panel" id="chatPanel" role="dialog" aria-label="Kordrex assistant" hidden>
+  <div class="chat-head">
+    <span class="av" aria-hidden="true">K</span>
+    <div class="t"><b>Kordrex Assistant</b><span class="s">Online · replies instantly</span></div>
+    <button type="button" id="chatReset" title="Start over">Restart</button>
+  </div>
+  <div class="chat-log" id="chatLog" role="log" aria-live="polite"></div>
+  <div class="chips" id="chatChips"></div>
+  <form class="chat-input" id="chatForm" autocomplete="off">
+    <input id="chatText" type="text" placeholder="Type a message…" aria-label="Message" maxlength="800">
+    <button type="submit" id="chatSend" aria-label="Send"><svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="13 6 19 12 13 18"/></svg></button>
+  </form>
+</section>
+
+<script>
+  (function(){
+    var BACKDROPS = {
+      home:     'assets/carbon-home.jpg',
+      services: 'assets/hero.jpg',
+      reviews:  'assets/sphere.jpg',
+      about:    'assets/about-bg.jpg',
+      contact:  'assets/sphere.jpg'
+    };
+    var layers = [document.getElementById('bgA'), document.getElementById('bgB')];
+    var front = 0;
+    var current = null;
+
+    // Warm the images so the first crossfade is clean.
+    Object.keys(BACKDROPS).forEach(function(k){
+      if (!BACKDROPS[k]) return;
+      var im = new Image();
+      im.src = BACKDROPS[k];
+    });
+
+    function setBackdrop(src){
+      if (src === current) return;
+      current = src;
+      var next = layers[1 - front];
+      if (!src){
+        layers[front].classList.remove('on');
+        next.classList.remove('on');
+        return;
+      }
+      next.style.backgroundImage = 'url("' + src + '")';
+      next.classList.add('on');
+      layers[front].classList.remove('on');
+      front = 1 - front;
+    }
+
+    function go(name, push){
+      var target = document.getElementById('page-' + name);
+      if (!target || target.hidden) { name = 'home'; target = document.getElementById('page-home'); }
+
+      document.querySelectorAll('.page').forEach(function(p){ p.classList.remove('active'); });
+      target.classList.add('active');
+
+      document.querySelectorAll('nav.links button').forEach(function(b){
+        if (b.dataset.page === name) { b.setAttribute('aria-current','page'); }
+        else { b.removeAttribute('aria-current'); }
+      });
+
+      setBackdrop(BACKDROPS[name] || '');
+      document.title = name === 'home' ? 'Kordrex' : 'Kordrex — ' + name.charAt(0).toUpperCase() + name.slice(1);
+
+      if (push && location.hash !== '#' + name) {
+        history.pushState({page:name}, '', '#' + name);
+      }
+      window.scrollTo({top:0, behavior: push ? 'smooth' : 'auto'});
+    }
+
+    document.addEventListener('click', function(e){
+      var el = e.target.closest('[data-page]');
+      if (!el) return;
+      e.preventDefault();
+      go(el.dataset.page, true);
+    });
+
+    window.addEventListener('popstate', function(){
+      go((location.hash || '#home').slice(1), false);
+    });
+
+    go((location.hash || '#home').slice(1), false);
+  })();
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/motion@11.11.13/dist/motion.js"></script>
+<script>
+  /* ===== Services: vertical scroll drives a left-to-right card track =====
+     Uses Motion's scroll() (motion.dev) when available, plain JS otherwise. */
+  (function(){
+    var page = document.getElementById('page-services');
+    var section = document.getElementById('svcScroll');
+    var viewport = document.getElementById('hsViewport');
+    var track = document.getElementById('hsTrack');
+    var panels = Array.prototype.slice.call(track.querySelectorAll('.hs-panel'));
+    var bar = document.getElementById('hsBar');
+    var nowEl = document.getElementById('hsNow');
+    var prev = document.getElementById('hsPrev');
+    var next = document.getElementById('hsNext');
+    var header = document.querySelector('header.nav');
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    document.getElementById('hsTotal').textContent = ('0' + panels.length).slice(-2);
+
+    var mode = null, distance = 0, stops = [], stopScroll = null, current = -1, raf = 0;
+
+    function pad(n){ return ('0' + n).slice(-2); }
+    function clamp(v, a, b){ return Math.max(a, Math.min(b, v)); }
+
+    function setActive(i){
+      if (i === current) return;
+      current = i;
+      nowEl.textContent = pad(i + 1);
+      prev.disabled = i <= 0;
+      next.disabled = i >= panels.length - 1;
+    }
+
+    /* Pinned mode: progress 0..1 -> translateX */
+    function render(progress){
+      var x = progress * distance;
+      track.style.transform = 'translate3d(' + (-x).toFixed(1) + 'px,0,0)';
+      bar.style.transform = 'scaleX(' + progress.toFixed(4) + ')';
+      var vw = window.innerWidth;
+      var a = panels[0], z = panels[panels.length - 1];
+      var focusStart = a._left + a._w / 2, focusEnd = z._left - distance + z._w / 2;
+      var focus = focusStart + (focusEnd - focusStart) * progress;
+      var best = 0, bd = Infinity;
+      for (var i = 0; i < panels.length; i++){
+        var el = panels[i];
+        var c = el._left - x + el._w / 2;
+        var d = Math.abs(c - focus);
+        if (d < bd){ bd = d; best = i; }
+        var t = clamp(d / (vw * 0.9), 0, 1);
+        el.style.opacity = (1 - t * 0.6).toFixed(3);
+        el.style.transform = 'scale(' + (1 - t * 0.07).toFixed(4) + ')';
+      }
+      setActive(best);
+    }
+
+    function measure(){
+      header && document.documentElement.style.setProperty('--hdr', header.offsetHeight + 'px');
+      track.style.transform = 'none';
+      var padL = parseFloat(getComputedStyle(track).paddingLeft) || 0;
+      panels.forEach(function(el){ el.style.transform = 'none'; el._left = el.offsetLeft; el._w = el.offsetWidth; });
+      distance = Math.max(0, track.scrollWidth - window.innerWidth);
+      /* scroll position at which each panel is the focused one */
+      var a = panels[0], z = panels[panels.length - 1];
+      var fs = a._left + a._w / 2, fe = z._left - distance + z._w / 2;
+      stops = panels.map(function(el){
+        var c = el._left + el._w / 2;
+        var den = (distance + fe - fs);
+        var p = den ? clamp((c - fs) / den, 0, 1) : 0;
+        return p * distance;
+      });
+    }
+
+    function hdr(){ return header ? header.offsetHeight : 0; }
+    function progressFromWindow(){
+      var r = section.getBoundingClientRect();
+      var span = section.offsetHeight - (window.innerHeight - hdr());
+      return span > 0 ? clamp((hdr() - r.top) / span, 0, 1) : 0;
+    }
+    function onWinScroll(){
+      if (raf) return;
+      raf = requestAnimationFrame(function(){ raf = 0; render(progressFromWindow()); });
+    }
+
+    function onSwipeScroll(){
+      var max = viewport.scrollWidth - viewport.clientWidth;
+      var p = max > 0 ? viewport.scrollLeft / max : 0;
+      bar.style.transform = 'scaleX(' + p.toFixed(4) + ')';
+      var best = 0, bd = Infinity, vl = viewport.getBoundingClientRect().left;
+      panels.forEach(function(el, i){ var d = Math.abs(el.getBoundingClientRect().left - vl - 22); if (d < bd){ bd = d; best = i; } });
+      if (viewport.scrollLeft >= max - 2) best = panels.length - 1;
+      setActive(best);
+    }
+
+    function teardown(){
+      if (stopScroll){ stopScroll(); stopScroll = null; }
+      window.removeEventListener('scroll', onWinScroll);
+      viewport.removeEventListener('scroll', onSwipeScroll);
+      section.style.height = '';
+      track.style.transform = '';
+      panels.forEach(function(el){ el.style.transform = ''; el.style.opacity = ''; });
+    }
+
+    function setup(){
+      if (!page.classList.contains('active')) return;
+      teardown();
+      current = -1;
+      var pinned = !reduce.matches && window.innerWidth >= 760 && window.innerHeight >= 640;
+      mode = pinned ? 'pinned' : 'swipe';
+      section.classList.toggle('swipe', !pinned);
+      if (!pinned){
+        viewport.addEventListener('scroll', onSwipeScroll, { passive: true });
+        onSwipeScroll();
+        return;
+      }
+      measure();
+      if (track.offsetHeight > viewport.clientHeight){
+        mode = 'swipe'; section.classList.add('swipe');
+        viewport.addEventListener('scroll', onSwipeScroll, { passive: true });
+        onSwipeScroll();
+        return;
+      }
+      section.style.height = (window.innerHeight - hdr() + distance) + 'px';
+      if (window.Motion && typeof window.Motion.scroll === 'function'){
+        stopScroll = window.Motion.scroll(function(progress){ render(progress); }, { target: section, offset: ['start ' + hdr() + 'px', 'end end'] });
+      } else {
+        window.addEventListener('scroll', onWinScroll, { passive: true });
+      }
+      render(progressFromWindow());
+    }
+
+    function goTo(i){
+      i = clamp(i, 0, panels.length - 1);
+      if (mode === 'swipe'){
+        var vl = viewport.getBoundingClientRect().left;
+        viewport.scrollBy({ left: panels[i].getBoundingClientRect().left - vl - 22, behavior: reduce.matches ? 'auto' : 'smooth' });
+        return;
+      }
+      var top = section.getBoundingClientRect().top + window.scrollY - hdr();
+      var span = section.offsetHeight - (window.innerHeight - hdr());
+      var p = distance ? stops[i] / distance : 0;
+      window.scrollTo({ top: top + p * span, behavior: reduce.matches ? 'auto' : 'smooth' });
+    }
+
+    prev.addEventListener('click', function(){ goTo(current - 1); });
+    next.addEventListener('click', function(){ goTo(current + 1); });
+    section.addEventListener('keydown', function(e){
+      if (e.target.closest('input,textarea,select')) return;
+      if (e.key === 'ArrowRight'){ e.preventDefault(); goTo(current + 1); }
+      if (e.key === 'ArrowLeft'){ e.preventDefault(); goTo(current - 1); }
+    });
+    document.getElementById('hsChat').addEventListener('click', function(){
+      var b = document.getElementById('chatBubble');
+      if (b && b.getAttribute('aria-expanded') !== 'true') b.click();
+    });
+
+    new MutationObserver(function(){
+      if (page.classList.contains('active')) requestAnimationFrame(setup); else teardown();
+    }).observe(page, { attributes: true, attributeFilter: ['class'] });
+
+    var rt = 0;
+    window.addEventListener('resize', function(){ clearTimeout(rt); rt = setTimeout(setup, 150); });
+    if (reduce.addEventListener) reduce.addEventListener('change', setup);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(setup);
+    window.addEventListener('load', setup);
+    setup();
+  })();
+</script>
+
+<script>
+  /* ===== Speed-to-lead form → n8n webhook =====
+     Paste your n8n Webhook node's PRODUCTION URL below (HTTP Method: POST). */
+  var N8N_WEBHOOK_URL = 'https://rogerawilhelma.app.n8n.cloud/webhook/kordrex-lead';
+
+  (function(){
+    var form = document.getElementById('leadForm');
+    var status = document.getElementById('lf-status');
+    var submit = document.getElementById('lf-submit');
+    var success = document.getElementById('leadSuccess');
+    var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+    function setStatus(msg, isErr){
+      status.textContent = msg || '';
+      status.classList.toggle('err', !!isErr);
+    }
+    function mark(el, bad){ if (bad) el.setAttribute('aria-invalid','true'); else el.removeAttribute('aria-invalid'); }
+
+    form.addEventListener('input', function(e){ if (e.target.hasAttribute('aria-invalid')) mark(e.target, false); });
+
+    form.addEventListener('submit', function(e){
+      e.preventDefault();
+      var f = form.elements;
+      var name = f.name.value.trim(), email = f.email.value.trim(), phone = f.phone.value.trim();
+      var digits = phone.replace(/\D/g,'');
+      var first = null;
+      [[f.name, !name], [f.email, !EMAIL_RE.test(email)], [f.phone, digits.length < 10]].forEach(function(p){
+        mark(p[0], p[1]); if (p[1] && !first) first = p[0];
+      });
+      if (first){ setStatus('Please add your name, a valid email, and a phone number.', true); first.focus(); return; }
+
+      // Bots fill the hidden field; pretend success and send nothing.
+      if (f.website.value){ form.hidden = true; success.hidden = false; return; }
+
+      var payload = {
+        name: name,
+        first_name: name.split(/\s+/)[0],
+        email: email,
+        phone: phone,
+        phone_e164: digits.length === 10 ? '+1' + digits : (digits.length === 11 && digits[0] === '1' ? '+' + digits : '+' + digits),
+        business: f.business.value.trim(),
+        service: f.service.value,
+        message: f.message.value.trim(),
+        sms_consent: f.sms_consent.checked,
+        source: 'kordrex-website-contact',
+        page_url: location.href.split('#')[0],
+        submitted_at: new Date().toISOString(),
+        timezone: (Intl.DateTimeFormat().resolvedOptions().timeZone || '')
+      };
+
+      submit.disabled = true;
+      submit.textContent = 'Sending…';
+      setStatus('');
+
+      var ctrl = ('AbortController' in window) ? new AbortController() : null;
+      var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); }, 15000);
+
+      fetch(N8N_WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        signal: ctrl ? ctrl.signal : undefined
+      }).then(function(res){
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        form.hidden = true;
+        success.hidden = false;
+        success.focus();
+      }).catch(function(){
+        setStatus('Something went wrong sending that. Please email kordrex@kordrexsystems.com or call (440) 903-6534.', true);
+      }).then(function(){
+        clearTimeout(timer);
+        submit.disabled = false;
+        submit.textContent = 'Send Inquiry';
+      });
+    });
+  })();
+</script>
+
+<script>
+  /* ===== Website chatbot (powered by n8n) =====
+     n8n workflow: "Kordrex Website Chatbot" → Chat Trigger (public, webhook mode) → AI Agent.
+     Leads captured in chat are emailed to kordrex@kordrexsystems.com by the agent's Gmail tool. */
+  var N8N_CHAT_URL = 'https://rogerawilhelma.app.n8n.cloud/webhook/b9dab6a7-236d-41a0-af02-4ccb02246206/chat';
+
+  (function(){
+    var bubble = document.getElementById('chatBubble');
+    var panel = document.getElementById('chatPanel');
+    var log = document.getElementById('chatLog');
+    var chipsEl = document.getElementById('chatChips');
+    var form = document.getElementById('chatForm');
+    var input = document.getElementById('chatText');
+    var send = document.getElementById('chatSend');
+
+    var STARTERS = ['What do you offer?', 'How could this help my business?', 'How does a project work?', 'Get in touch'];
+    var GREETING = "Hi, I'm the Kordrex assistant. I can explain our AI Automations and AI Agents, show how they'd help your business, or connect you with the team. What kind of business do you run?";
+    var FALLBACK = "Sorry, I'm having trouble connecting right now. You can reach the team at kordrex@kordrexsystems.com or (440) 903-6534 / (757) 629-3220.";
+
+    function newSessionId(){
+      return 'kx-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10);
+    }
+    var sessionId;
+    try { sessionId = sessionStorage.getItem('kx_chat_sid'); } catch(e){}
+    if (!sessionId){
+      sessionId = newSessionId();
+      try { sessionStorage.setItem('kx_chat_sid', sessionId); } catch(e){}
+    }
+
+    var started = false, busy = false, gen = 0;
+
+    function scrollDown(){ log.scrollTop = log.scrollHeight; }
+
+    function linkify(el, text){
+      var re = /([\w.+-]+@[\w-]+\.[\w.]+)|(\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4})/g, last = 0, m;
+      while ((m = re.exec(text))){
+        if (m.index > last) el.appendChild(document.createTextNode(text.slice(last, m.index)));
+        var a = document.createElement('a');
+        a.textContent = m[0];
+        a.href = m[1] ? 'mailto:' + m[1] : 'tel:+1' + m[0].replace(/\D/g,'').slice(-10);
+        el.appendChild(a);
+        last = re.lastIndex;
+      }
+      if (last < text.length) el.appendChild(document.createTextNode(text.slice(last)));
+    }
+
+    function addMsg(text, who){
+      var el = document.createElement('div');
+      el.className = 'msg ' + who;
+      if (who === 'bot'){
+        text = String(text).replace(/\*\*(.+?)\*\*/g,'$1').replace(/^#+\s*/gm,'').trim();
+        linkify(el, text);
+      } else {
+        el.textContent = text;
+      }
+      log.appendChild(el);
+      scrollDown();
+    }
+
+    function setChips(list){
+      chipsEl.textContent = '';
+      (list || []).forEach(function(label){
+        var b = document.createElement('button');
+        b.type = 'button'; b.textContent = label;
+        b.addEventListener('click', function(){ handle(label); });
+        chipsEl.appendChild(b);
+      });
+    }
+
+    function typing(on){
+      var t = document.getElementById('chatTyping');
+      if (on && !t){
+        t = document.createElement('div'); t.id = 'chatTyping'; t.className = 'typing';
+        t.setAttribute('aria-label','Assistant is typing');
+        t.innerHTML = '<i></i><i></i><i></i>'; log.appendChild(t); scrollDown();
+      } else if (!on && t){ t.remove(); }
+    }
+
+    function setBusy(on){
+      busy = on;
+      send.disabled = on;
+      typing(on);
+    }
+
+    function handle(raw){
+      var text = String(raw || '').trim();
+      if (!text || busy) return;
+      if (text === 'Get in touch') text = "I'd like to get in touch with the Kordrex team.";
+      addMsg(text, 'user');
+      input.value = '';
+      setChips([]);
+      setBusy(true);
+      var myGen = gen;
+
+      var ctrl = ('AbortController' in window) ? new AbortController() : null;
+      var timer = setTimeout(function(){ if (ctrl) ctrl.abort(); }, 45000);
+
+      fetch(N8N_CHAT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'sendMessage', sessionId: sessionId, chatInput: text }),
+        signal: ctrl ? ctrl.signal : undefined
+      }).then(function(r){
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      }).then(function(data){
+        var out = Array.isArray(data) ? data[0] : data;
+        var reply = out && (out.output || out.text || out.message);
+        if (!reply) throw new Error('empty');
+        if (myGen !== gen) return;
+        setBusy(false);
+        addMsg(reply, 'bot');
+      }).catch(function(){
+        if (myGen !== gen) return;
+        setBusy(false);
+        addMsg(FALLBACK, 'bot');
+      }).then(function(){
+        clearTimeout(timer);
+        if (myGen === gen && !panel.hidden && window.matchMedia('(min-width:521px)').matches) input.focus();
+      });
+    }
+
+    function greet(){
+      addMsg(GREETING, 'bot');
+      setChips(STARTERS);
+    }
+
+    function open(){
+      panel.hidden = false;
+      bubble.setAttribute('aria-expanded','true');
+      bubble.setAttribute('aria-label','Close chat');
+      if (!started){ started = true; greet(); }
+      setTimeout(function(){ if (window.matchMedia('(min-width:521px)').matches) input.focus(); }, 50);
+    }
+    function close(){
+      panel.hidden = true;
+      bubble.setAttribute('aria-expanded','false');
+      bubble.setAttribute('aria-label','Chat with Kordrex');
+    }
+
+    bubble.addEventListener('click', function(){ panel.hidden ? open() : close(); });
+    document.addEventListener('keydown', function(e){ if (e.key === 'Escape' && !panel.hidden){ close(); bubble.focus(); } });
+    form.addEventListener('submit', function(e){ e.preventDefault(); handle(input.value); });
+    document.getElementById('chatReset').addEventListener('click', function(){
+      gen++;
+      sessionId = newSessionId();
+      try { sessionStorage.setItem('kx_chat_sid', sessionId); } catch(e){}
+      log.textContent = '';
+      setBusy(false);
+      greet();
+    });
+  })();
+</script>
+
+</body></html>
