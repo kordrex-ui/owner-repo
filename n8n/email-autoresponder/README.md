@@ -8,6 +8,8 @@ An n8n workflow that:
 
 Live workflow: https://rogerawilhelma.app.n8n.cloud/workflow/Lv8ReqQkA4Ijsee7 (published and active)
 
+Works alongside the existing **Speed to Lead - Kordrex Website** workflow, which answers new website form submissions.
+
 ## How it flows
 
 ```
@@ -31,51 +33,26 @@ New Inbox Email (Gmail, 1 min) ─► Prepare Inbox ──┘
 ## Setup status
 
 - [x] Owner alerts go to `kordrex@kordrexsystems.com` (**Alert Owner: Needs Reply** node).
-- [x] Reply prompt uses https://kordrexsystems.com and asks new leads for two or three call times and a phone number. If you get a booking link (Calendly, Cal.com, etc.), add it to the `Next step for new leads` line in **AI Reply Writer** → Options → System Message.
+- [x] Reply prompt uses the real services, process, phone numbers and response time from kordrexsystems.com, and asks new leads for two or three call times and a phone number. If you get a booking link (Calendly, Cal.com, etc.), add it to the `Next step for new leads` line in **AI Reply Writer** → Options → System Message.
 - [x] Both AI models run on the `Google Gemini(PaLM) Api account` credential (`models/gemini-3-flash-preview`), not the free OpenAI credits that run out.
 - [x] Gmail nodes use the `Gmail account` credential.
 - [x] Workflow published.
-- [ ] **Connect the website contact form** (see below). The site at kordrexsystems.com was deployed to Netlify by drag-and-drop, so its source isn't in a repo; add the form to your site files and re-upload.
-- [ ] **Test** by submitting the form once and emailing yourself from another address, then check the n8n execution log.
+- [x] Website contact form is connected (see below). No website changes were needed.
+- [ ] **Test** by submitting the website form and replying to the email you get back, then check the n8n execution log for both workflows.
 
-## Connecting your website contact form
+## How the website contact form fits in
 
-Production webhook URL (works the workflow is published):
+The form on kordrexsystems.com already posts to your existing **Speed to Lead - Kordrex Website** workflow (`/webhook/kordrex-lead`). That workflow qualifies the lead, sends the first reply from the same Gmail account, alerts you about urgent or sales leads, and logs everything to Data Tables.
 
-```
-POST https://rogerawilhelma.app.n8n.cloud/webhook/kordrex-contact-form
-```
+This autoresponder takes over from there:
 
-It accepts JSON or form fields: `name`, `email`, `phone`, `company`, `message`, plus a hidden `website` honeypot field. Real visitors leave the honeypot empty; bots usually fill it in.
+1. Visitor submits the form → **Speed to Lead** emails them within seconds.
+2. Visitor replies to that email → the reply lands in the inbox.
+3. **This workflow** picks it up within a minute, classifies it, and either replies in the same thread or stars it and alerts you.
 
-Drop-in example:
+The reply prompt knows the lead already got that first email, so it doesn't re-introduce the company.
 
-```html
-<form id="contact-form">
-  <input name="name" placeholder="Your name" required>
-  <input name="email" type="email" placeholder="Email" required>
-  <input name="phone" placeholder="Phone (optional)">
-  <input name="company" placeholder="Company (optional)">
-  <textarea name="message" placeholder="How can we help?" required></textarea>
-  <!-- Honeypot: hidden from humans, bots fill it in -->
-  <input name="website" tabindex="-1" autocomplete="off" style="position:absolute;left:-9999px" aria-hidden="true">
-  <button type="submit">Send</button>
-</form>
-<script>
-  document.getElementById('contact-form').addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const data = Object.fromEntries(new FormData(e.target));
-    await fetch('https://rogerawilhelma.app.n8n.cloud/webhook/kordrex-contact-form', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data),
-    });
-    e.target.innerHTML = '<p>Thanks! We just emailed you, so check your inbox.</p>';
-  });
-</script>
-```
-
-If your site builder (Wix, Webflow, WordPress, Framer, etc.) has its own form, point its webhook or "send to URL" option at the same address and keep the field names above.
+This workflow also has its own **Website Contact Form** webhook (`/webhook/kordrex-contact-form`). It is not used by the live site; it's there for another site or form you want to connect directly. Don't point the main site at it, or leads will lose Speed to Lead's logging and urgent alerts.
 
 ## Prompts
 
