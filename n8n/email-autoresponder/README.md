@@ -61,7 +61,9 @@ The two AI prompts are also kept as plain files so you can version and tweak the
 - [`prompts/classifier-system-prompt.md`](prompts/classifier-system-prompt.md): spam and intent triage, returns structured JSON.
 - [`prompts/reply-writer-system-prompt.md`](prompts/reply-writer-system-prompt.md): writes the actual reply in the Kordrex voice.
 
-`workflow.ts` is the n8n Workflow SDK source the live workflow was built from.
+`kordrex-ai-email-autoresponder.json` is an importable copy of the workflow (n8n → *Create workflow* → ⋯ → *Import from file*). After importing, re-select your Gmail and Gemini credentials on the Gmail and model nodes.
+
+`workflow.ts` is the n8n Workflow SDK source it was generated from.
 
 ## Tuning
 
